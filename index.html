@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem E-Rekod Murid Lewat Ke Sekolah</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .tab-btn.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        /* Custom scrollbar for tables */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased pb-12">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-900 via-indigo-800 to-blue-900 text-white shadow-xl">
+        <div class="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-4 text-center md:text-left">
+                    <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-inner">
+                        <i class="fa-solid fa-clock text-amber-400 text-3xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">SISTEM E-REKOD MURID LEWAT</h1>
+                        <p class="text-blue-200 text-sm font-medium mt-0.5">Pengurusan Kehadiran & Rekod Kelewatan Murid Ke Sekolah</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 bg-blue-950/50 px-4 py-2 rounded-xl border border-blue-700/50 text-xs sm:text-sm">
+                    <span class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></span>
+                    <span class="font-semibold text-blue-100" id="live-time-display">Masa Realtime...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap justify-center sm:justify-start gap-2 mb-8 bg-slate-200/80 p-1.5 rounded-2xl backdrop-blur-md max-w-fit mx-auto sm:mx-0 shadow-inner">
+            <button onclick="switchTab('form-tab')" id="nav-form-tab" class="tab-btn active px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center gap-2 text-slate-700">
+                <i class="fa-solid fa-pen-to-square"></i> Borang Rekod
+            </button>
+            <button onclick="switchTab('leaderboard-tab')" id="nav-leaderboard-tab" class="tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center gap-2 text-slate-700">
+                <i class="fa-solid fa-trophy text-amber-500"></i> Leaderboard Awam
+            </button>
+            <button onclick="switchTab('admin-tab')" id="nav-admin-tab" class="tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center gap-2 text-slate-700">
+                <i class="fa-solid fa-user-shield text-indigo-600"></i> Panel Admin
+            </button>
+        </div>
+
+        <!-- TAB 1: BORANG REKOD MURID LEWAT -->
+        <section id="form-tab" class="tab-content transition-all duration-300">
+            <div class="glass-card rounded-3xl shadow-xl p-6 sm:p-10 max-w-3xl mx-auto border border-white">
+                <div class="border-b border-slate-200 pb-4 mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </span>
+                        Borang Pendaftaran Kelewatan Murid
+                    </h2>
+                    <p class="text-slate-500 text-sm mt-1">Sila isi maklumat murid dengan lengkap bagi merekod kelewatan ke sekolah.</p>
+                </div>
+
+                <form id="late-record-form" class="space-y-6">
+                    <!-- Nama Murid (Integrasi Google Sheet) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="student-name" class="block text-sm font-bold text-slate-700">
+                                <i class="fa-solid fa-user text-blue-600 mr-1.5"></i> Nama Murid <span class="text-rose-500">*</span>
+                            </label>
+                            <span id="sheet-sync-badge" class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-info text-blue-500"></i> Sedia Untuk Input
+                            </span>
+                        </div>
+                        <input type="text" id="student-name" list="student-names-list" required autocomplete="off" placeholder="Taip nama atau pilih dari senarai Google Sheet..." 
+                            oninput="handleStudentNameInput()"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none uppercase font-medium text-slate-800 bg-slate-50/50 focus:bg-white">
+                        <datalist id="student-names-list">
+                            <!-- Senarai nama dimuatkan secara automatik dari Google Sheet -->
+                        </datalist>
+                        <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-info text-blue-500"></i> Taip nama murid. Jika nama wujud dalam Google Sheet, kelas akan diisi secara automatik.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- Tarikh -->
+                        <div>
+                            <label for="late-date" class="block text-sm font-bold text-slate-700 mb-2">
+                                <i class="fa-solid fa-calendar-day text-blue-600 mr-1.5"></i> Tarikh <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" id="late-date" required 
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-medium text-slate-800 bg-slate-50/50 focus:bg-white">
+                        </div>
+
+                        <!-- Kelas (Dropdown Tahun 1 - 6 untuk Ibnu Rushd, Khaldun, Sina) -->
+                        <div>
+                            <label for="student-class" class="block text-sm font-bold text-slate-700 mb-2">
+                                <i class="fa-solid fa-school text-blue-600 mr-1.5"></i> Kelas <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="student-class" required 
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-medium text-slate-800 bg-slate-50/50 focus:bg-white">
+                                <option value="" disabled selected>-- Pilih Kelas Murid --</option>
+                                <optgroup label="Tahun 1">
+                                    <option value="1 IBNU RUSHD">1 IBNU RUSHD</option>
+                                    <option value="1 IBNU KHALDUN">1 IBNU KHALDUN</option>
+                                    <option value="1 IBNU SINA">1 IBNU SINA</option>
+                                </optgroup>
+                                <optgroup label="Tahun 2">
+                                    <option value="2 IBNU RUSHD">2 IBNU RUSHD</option>
+                                    <option value="2 IBNU KHALDUN">2 IBNU KHALDUN</option>
+                                    <option value="2 IBNU SINA">2 IBNU SINA</option>
+                                </optgroup>
+                                <optgroup label="Tahun 3">
+                                    <option value="3 IBNU RUSHD">3 IBNU RUSHD</option>
+                                    <option value="3 IBNU KHALDUN">3 IBNU KHALDUN</option>
+                                    <option value="3 IBNU SINA">3 IBNU SINA</option>
+                                </optgroup>
+                                <optgroup label="Tahun 4">
+                                    <option value="4 IBNU RUSHD">4 IBNU RUSHD</option>
+                                    <option value="4 IBNU KHALDUN">4 IBNU KHALDUN</option>
+                                    <option value="4 IBNU SINA">4 IBNU SINA</option>
+                                </optgroup>
+                                <optgroup label="Tahun 5">
+                                    <option value="5 IBNU RUSHD">5 IBNU RUSHD</option>
+                                    <option value="5 IBNU KHALDUN">5 IBNU KHALDUN</option>
+                                    <option value="5 IBNU SINA">5 IBNU SINA</option>
+                                </optgroup>
+                                <optgroup label="Tahun 6">
+                                    <option value="6 IBNU RUSHD">6 IBNU RUSHD</option>
+                                    <option value="6 IBNU KHALDUN">6 IBNU KHALDUN</option>
+                                    <option value="6 IBNU SINA">6 IBNU SINA</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Alasan Lewat -->
+                    <div>
+                        <label for="late-reason" class="block text-sm font-bold text-slate-700 mb-2">
+                            <i class="fa-solid fa-triangle-exclamation text-blue-600 mr-1.5"></i> Alasan Lewat <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="late-reason" required onchange="toggleCustomReasonInput()" 
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none font-medium text-slate-800 bg-slate-50/50 focus:bg-white">
+                            <option value="" disabled selected>-- Pilih Alasan Kelewatan --</option>
+                            <option value="KESESAKAN LALU LINTAS">KESESAKAN LALU LINTAS</option>
+                            <option value="LEWAT BANGUN">LEWAT BANGUN</option>
+                            <option value="KERETA ROSAK">KERETA ROSAK</option>
+                            <option value="LAIN-LAIN">LAIN-LAIN (Nyatakan secara manual)</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Reason Field -->
+                    <div id="custom-reason-container" class="hidden transition-all duration-300 bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                        <label for="custom-reason" class="block text-sm font-bold text-amber-900 mb-2">
+                            <i class="fa-solid fa-pen text-amber-600 mr-1.5"></i> Sila Nyatakan Alasan Lain-lain: <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" id="custom-reason" placeholder="Contoh: Menunggu adik / Hujan lebat / Hal keluarga" 
+                            class="w-full px-4 py-3 rounded-xl border border-amber-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all outline-none font-medium text-slate-800 bg-white">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button type="submit" id="submit-btn" 
+                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-blue-500/30 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3 text-base">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Hantar & Simpan Rekod</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 2: LEADERBOARD AWAM (TOP 10) -->
+        <section id="leaderboard-tab" class="tab-content hidden transition-all duration-300">
+            <div class="space-y-6">
+                <!-- Leaderboard Header Banner -->
+                <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <span class="bg-amber-900/30 text-amber-100 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase backdrop-blur-sm border border-amber-400/30">Kemaskini Automatik</span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold mt-2 flex items-center gap-3">
+                            <i class="fa-solid fa-crown text-yellow-300 text-3xl"></i>
+                            Leaderboard Murid Paling Kerap Lewat
+                        </h2>
+                        <p class="text-amber-100 text-sm mt-1">Senarai Top 10 kedudukan murid mengikut jumlah kekerapan kelewatan yang direkodkan.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/20">
+                        <div class="text-center px-3">
+                            <p class="text-xs text-amber-200">Jumlah Rekod</p>
+                            <p class="text-2xl font-black" id="stat-total-records">0</p>
+                        </div>
+                        <div class="w-px h-8 bg-amber-300/30"></div>
+                        <div class="text-center px-3">
+                            <p class="text-xs text-amber-200">Murid Terlibat</p>
+                            <p class="text-2xl font-black" id="stat-total-students">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 10 Leaderboard List -->
+                <div class="glass-card rounded-3xl shadow-xl overflow-hidden border border-white">
+                    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-list-ol text-amber-500"></i>
+                            Carta Top 10 Kelewatan
+                        </h3>
+                        <span class="text-xs text-slate-500 font-medium">Dikemaskini secara langsung</span>
+                    </div>
+
+                    <div id="leaderboard-empty" class="p-12 text-center text-slate-500">
+                        <i class="fa-solid fa-clipboard-check text-4xl text-emerald-500 mb-3"></i>
+                        <p class="font-bold text-slate-700">Tiada Rekod Kelewatan</p>
+                        <p class="text-sm text-slate-500 mt-1">Syabas! Belum ada rekod murid lewat didaftarkan dalam sistem.</p>
+                    </div>
+
+                    <div id="leaderboard-list-container" class="hidden divide-y divide-slate-100">
+                        <!-- Top 10 List Items injected here via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: ADMIN DASHBOARD (PROTECTED) -->
+        <section id="admin-tab" class="tab-content hidden transition-all duration-300">
+            <!-- Unauthenticated Admin State -->
+            <div id="admin-auth-card" class="glass-card rounded-3xl shadow-xl p-8 max-w-md mx-auto text-center border border-white my-8">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">Akses Admin</h3>
+                <p class="text-slate-500 text-sm mb-6">Sila masukkan laluan kata admin untuk menguruskan data rekod kelewatan murid.</p>
+                
+                <form id="admin-login-form" class="space-y-4">
+                    <div>
+                        <input type="password" id="admin-password" placeholder="Laluan Kata / Password" required
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-center text-lg font-bold outline-none">
+                    </div>
+                    <div id="admin-error-msg" class="hidden text-rose-500 text-xs font-semibold bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Laluan kata salah! (Guna: admin123)
+                    </div>
+                    <button type="submit" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-md transition-all">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Log Masuk Panel Admin
+                    </button>
+                </form>
+            </div>
+
+            <!-- Authenticated Admin Content -->
+            <div id="admin-content" class="hidden space-y-6">
+                <!-- Admin Bar & Tools -->
+                <div class="glass-card rounded-3xl p-6 shadow-xl border border-white flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">Akses Admin Aktif</span>
+                            <span class="text-xs text-slate-500">Kata Laluan: admin123</span>
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-slate-800 mt-1">Pengurusan Rekod Kelewatan</h2>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+                        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Eksport CSV</span>
+                        </button>
+                        <button onclick="logoutAdmin()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Log Keluar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Google Sheet Integration Settings Card -->
+                <div class="glass-card rounded-3xl p-6 shadow-xl border border-white space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv text-emerald-600"></i>
+                            Integrasi Senarai Murid (Google Sheet)
+                        </h3>
+                        <span id="admin-sheet-status" class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-600 w-fit">
+                            Status: Belum disambung
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500">
+                        Tampal pautan Google Sheet anda untuk memuatkan senarai nama murid dan kelas secara automatik pada borang pendaftaran.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="url" id="gsheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?output=csv"
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+                        <button onclick="saveAndSyncGoogleSheet()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm shadow-md transition-all whitespace-nowrap flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-rotate"></i>
+                            <span>Simpan & Sync Sheet</span>
+                        </button>
+                    </div>
+                    
+                    <div class="bg-amber-50/90 border border-amber-200 p-4 rounded-2xl text-xs text-amber-900 space-y-1.5">
+                        <p class="font-bold flex items-center gap-1.5 text-amber-800 text-sm">
+                            <i class="fa-solid fa-lightbulb text-amber-500 text-base"></i> Cara Mudah Dapatkan Pautan Google Sheet:
+                        </p>
+                        <p>1. Buka Google Sheet murid &rarr; Pastikan <strong>Lajur A = Nama Murid</strong> dan <strong>Lajur B = Kelas</strong>.</p>
+                        <p>2. Klik menu <strong>Fail (File)</strong> &rarr; <strong>Kongsi (Share)</strong> &rarr; <strong>Terbitkan ke web (Publish to web)</strong>.</p>
+                        <p>3. Pilih helaian murid, tukar format ke <strong>Comma-separated values (.csv)</strong> &rarr; Klik <strong>Terbitkan (Publish)</strong>.</p>
+                        <p>4. Salin pautan yang diberi dan tampal di kotak atas!</p>
+                    </div>
+                </div>
+
+                <!-- Admin Search & Filter Controls -->
+                <div class="glass-card rounded-2xl p-4 shadow-md border border-white flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div class="relative w-full sm:w-80">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+                        <input type="text" id="admin-search" placeholder="Cari Nama Murid / Alasan..." oninput="filterAdminTable()"
+                            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm outline-none">
+                    </div>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <select id="admin-filter-class" onchange="filterAdminTable()" class="px-3 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto font-medium">
+                            <option value="">Semua Kelas</option>
+                            <option value="1 IBNU RUSHD">1 IBNU RUSHD</option>
+                            <option value="1 IBNU KHALDUN">1 IBNU KHALDUN</option>
+                            <option value="1 IBNU SINA">1 IBNU SINA</option>
+                            <option value="2 IBNU RUSHD">2 IBNU RUSHD</option>
+                            <option value="2 IBNU KHALDUN">2 IBNU KHALDUN</option>
+                            <option value="2 IBNU SINA">2 IBNU SINA</option>
+                            <option value="3 IBNU RUSHD">3 IBNU RUSHD</option>
+                            <option value="3 IBNU KHALDUN">3 IBNU KHALDUN</option>
+                            <option value="3 IBNU SINA">3 IBNU SINA</option>
+                            <option value="4 IBNU RUSHD">4 IBNU RUSHD</option>
+                            <option value="4 IBNU KHALDUN">4 IBNU KHALDUN</option>
+                            <option value="4 IBNU SINA">4 IBNU SINA</option>
+                            <option value="5 IBNU RUSHD">5 IBNU RUSHD</option>
+                            <option value="5 IBNU KHALDUN">5 IBNU KHALDUN</option>
+                            <option value="5 IBNU SINA">5 IBNU SINA</option>
+                            <option value="6 IBNU RUSHD">6 IBNU RUSHD</option>
+                            <option value="6 IBNU KHALDUN">6 IBNU KHALDUN</option>
+                            <option value="6 IBNU SINA">6 IBNU SINA</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Admin Table -->
+                <div class="glass-card rounded-3xl shadow-xl overflow-hidden border border-white">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100/80 text-slate-700 text-xs uppercase font-extrabold tracking-wider border-b border-slate-200">
+                                    <th class="py-4 px-6">Bil</th>
+                                    <th class="py-4 px-6">Nama Murid</th>
+                                    <th class="py-4 px-6">Kelas</th>
+                                    <th class="py-4 px-6">Tarikh</th>
+                                    <th class="py-4 px-6">Alasan Lewat</th>
+                                    <th class="py-4 px-6 text-center">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-table-body" class="divide-y divide-slate-100 text-sm font-medium text-slate-700">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="admin-table-empty" class="p-8 text-center text-slate-500 hidden">
+                        <i class="fa-solid fa-folder-open text-3xl text-slate-400 mb-2"></i>
+                        <p class="font-medium">Tiada rekod ditemui.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-bg" class="flex items-center gap-3 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700">
+            <span id="toast-icon" class="text-emerald-400 text-xl">
+                <i class="fa-solid fa-circle-check"></i>
+            </span>
+            <div>
+                <p id="toast-message" class="text-sm font-semibold">Mesej Notifikasi</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation for Deletion -->
+    <div id="delete-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all border border-slate-100">
+            <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Padam Rekod Ini?</h3>
+            <p class="text-slate-500 text-xs sm:text-sm mb-6">Tindakan ini tidak boleh dibatalkan. Data murid ini akan dipadam daripada pangkalan data.</p>
+            <div class="flex items-center gap-3">
+                <button onclick="closeDeleteModal()" class="w-1/2 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all">
+                    Batal
+                </button>
+                <button id="confirm-delete-btn" class="w-1/2 py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm shadow-md shadow-rose-500/20 transition-all">
+                    Padam
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Script & Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            deleteDoc, 
+            doc, 
+            setDoc,
+            onSnapshot,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global State & Local Fallback
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rekod-murid-lewat-app';
+        let allRecords = [];
+        let recordToDeleteId = null;
+        let isAdminAuthenticated = false;
+        let gsheetStudents = [];
+        let isFirebaseActive = false;
+        let db = null;
+        let recordsCollectionRef = null;
+        let gsheetConfigDocRef = null;
+
+        // Firebase Initializer with local fallback resilience
+        async function initApp() {
+            let firebaseConfig = {
+                apiKey: "AIzaSyDummyKeyForMockFallback12345",
+                authDomain: "mock-app.firebaseapp.com",
+                projectId: "mock-app",
+                storageBucket: "mock-app.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:abcdef123456"
+            };
+
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                } catch (e) {
+                    console.warn("Ralat parse config, guna mod bersendirian.");
+                }
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
+
+                recordsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'rekod_lewat');
+                gsheetConfigDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'gsheet_config');
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                setupRealtimeListener();
+                setupGSheetConfigListener();
+                isFirebaseActive = true;
+            } catch (err) {
+                console.warn("Firebase gagal disambung, bertukar ke LocalStorage Fallback:", err);
+                isFirebaseActive = false;
+                loadLocalRecords();
+                loadLocalGSheetConfig();
+            }
+        }
+
+        // Local Storage Helpers
+        function getLocalRecords() {
+            try {
+                return JSON.parse(localStorage.getItem('rekod_lewat_db') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveLocalRecords(records) {
+            localStorage.setItem('rekod_lewat_db', JSON.stringify(records));
+        }
+
+        function loadLocalRecords() {
+            allRecords = getLocalRecords();
+            renderLeaderboard();
+            if (isAdminAuthenticated) renderAdminTable();
+        }
+
+        function loadLocalGSheetConfig() {
+            const savedUrl = localStorage.getItem('gsheet_config_url');
+            if (savedUrl) {
+                document.getElementById('gsheet-url-input').value = savedUrl;
+                loadAndApplyGSheet(savedUrl);
+            }
+        }
+
+        // Realtime Listeners
+        function setupRealtimeListener() {
+            onSnapshot(recordsCollectionRef, (snapshot) => {
+                allRecords = [];
+                snapshot.forEach((docSnap) => {
+                    allRecords.push({
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
+                renderLeaderboard();
+                if (isAdminAuthenticated) renderAdminTable();
+            }, (error) => {
+                console.warn("Firestore error fallback to local:", error);
+                isFirebaseActive = false;
+                loadLocalRecords();
+            });
+        }
+
+        function setupGSheetConfigListener() {
+            onSnapshot(gsheetConfigDocRef, (docSnap) => {
+                if (docSnap.exists() && docSnap.data().url) {
+                    const url = docSnap.data().url;
+                    document.getElementById('gsheet-url-input').value = url;
+                    loadAndApplyGSheet(url);
+                }
+            }, (err) => {
+                loadLocalGSheetConfig();
+            });
+        }
+
+        // Robust GSheet Loader with Proxy Fallback
+        async function loadAndApplyGSheet(url) {
+            updateSheetStatusUI(null, "Memuatkan data...");
+
+            let cleanUrl = url.trim();
+            let urlsToTry = [];
+
+            if (cleanUrl.includes('output=csv')) {
+                urlsToTry.push(cleanUrl);
+            } else if (cleanUrl.includes('/pub')) {
+                const sep = cleanUrl.includes('?') ? '&' : '?';
+                urlsToTry.push(`${cleanUrl}${sep}output=csv`);
+            }
+
+            const sheetIdMatch = cleanUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (sheetIdMatch && sheetIdMatch[1] !== 'e') {
+                const sheetId = sheetIdMatch[1];
+                urlsToTry.push(`https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv`);
+                urlsToTry.push(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
+            }
+
+            let csvText = null;
+
+            for (let u of urlsToTry) {
+                try {
+                    let res = await fetch(u);
+                    if (res.ok) {
+                        let text = await res.text();
+                        if (!text.trim().startsWith('<!DOCTYPE') && !text.includes('<html')) {
+                            csvText = text;
+                            break;
+                        }
+                    }
+                } catch (e) {}
+
+                // Try via CORS proxy if direct fetch is blocked
+                try {
+                    let proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`;
+                    let res = await fetch(proxyUrl);
+                    if (res.ok) {
+                        let text = await res.text();
+                        if (!text.trim().startsWith('<!DOCTYPE') && !text.includes('<html')) {
+                            csvText = text;
+                            break;
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            if (!csvText) {
+                updateSheetStatusUI(false, "Pautan tidak sah/Terbitkan ke web dahulu!");
+                return;
+            }
+
+            const parsed = parseCSVStudents(csvText);
+            gsheetStudents = parsed;
+            populateDatalist(parsed);
+
+            if (parsed.length > 0) {
+                updateSheetStatusUI(true, `${parsed.length} murid disegerakkan`);
+            } else {
+                updateSheetStatusUI(false, "Sheet tiada data murid.");
+            }
+        }
+
+        // CSV Parser
+        function parseCSVStudents(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            const students = [];
+
+            lines.forEach((line, idx) => {
+                if (!line.trim()) return;
+
+                const cols = [];
+                let insideQuotes = false;
+                let col = '';
+                for (let c of line) {
+                    if (c === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (c === ',' && !insideQuotes) {
+                        cols.push(col.trim().replace(/^"|"$/g, ''));
+                        col = '';
+                    } else {
+                        col += c;
+                    }
+                }
+                cols.push(col.trim().replace(/^"|"$/g, ''));
+
+                const nama = cols[0] ? cols[0].trim().replace(/\uFEFF/g, '').toUpperCase() : '';
+                const kelas = cols[1] ? cols[1].trim().toUpperCase() : '';
+
+                if (idx === 0 && (nama.includes("NAMA") || nama.includes("NAME") || nama === "BIL")) {
+                    return;
+                }
+
+                if (nama) {
+                    students.push({ nama, kelas });
+                }
+            });
+
+            return students;
+        }
+
+        function populateDatalist(students) {
+            const datalist = document.getElementById('student-names-list');
+            if (!datalist) return;
+
+            let html = '';
+            students.forEach(s => {
+                const label = s.kelas ? `${s.nama} (${s.kelas})` : s.nama;
+                html += `<option value="${s.nama}">${label}</option>`;
+            });
+            datalist.innerHTML = html;
+        }
+
+        function updateSheetStatusUI(isSuccess, message) {
+            const formBadge = document.getElementById('sheet-sync-badge');
+            const adminStatus = document.getElementById('admin-sheet-status');
+
+            if (formBadge) {
+                if (isSuccess === true) {
+                    formBadge.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center gap-1";
+                    formBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
+                } else if (isSuccess === false) {
+                    formBadge.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1";
+                    formBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${message}`;
+                } else {
+                    formBadge.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1";
+                    formBadge.innerHTML = `<i class="fa-solid fa-rotate animate-spin"></i> ${message}`;
+                }
+            }
+
+            if (adminStatus) {
+                if (isSuccess === true) {
+                    adminStatus.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200";
+                    adminStatus.innerText = `Status: ${message}`;
+                } else if (isSuccess === false) {
+                    adminStatus.className = "text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-700 border border-rose-200";
+                    adminStatus.innerText = `Status: ${message}`;
+                } else {
+                    adminStatus.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200";
+                    adminStatus.innerText = `Status: ${message}`;
+                }
+            }
+        }
+
+        // Auto Select Class Logic
+        window.handleStudentNameInput = function() {
+            const typedName = document.getElementById('student-name').value.trim().toUpperCase();
+            if (!typedName) return;
+
+            const found = gsheetStudents.find(s => s.nama === typedName);
+            if (found && found.kelas) {
+                const targetClass = found.kelas.toUpperCase().trim();
+                const classSelect = document.getElementById('student-class');
+                if (classSelect) {
+                    for (let i = 0; i < classSelect.options.length; i++) {
+                        const optVal = classSelect.options[i].value.toUpperCase().trim();
+                        if (optVal === targetClass || optVal.includes(targetClass) || targetClass.includes(optVal)) {
+                            classSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+
+        // Save Sheet Config
+        window.saveAndSyncGoogleSheet = async function() {
+            const urlInput = document.getElementById('gsheet-url-input').value.trim();
+            if (!urlInput) {
+                showToast("Sila masukkan pautan URL Google Sheet!", "error");
+                return;
+            }
+
+            localStorage.setItem('gsheet_config_url', urlInput);
+
+            if (isFirebaseActive && gsheetConfigDocRef) {
+                try {
+                    await setDoc(gsheetConfigDocRef, {
+                        url: urlInput,
+                        updated_at: serverTimestamp()
+                    });
+                } catch (e) {}
+            }
+
+            showToast("Pautan disimpan & menyemak data!", "success");
+            loadAndApplyGSheet(urlInput);
+        };
+
+        // Live Clock Header
+        function updateLiveClock() {
+            const now = new Date();
+            const options = { 
+                weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            };
+            document.getElementById('live-time-display').innerText = now.toLocaleDateString('ms-MY', options);
+        }
+        setInterval(updateLiveClock, 1000);
+        updateLiveClock();
+
+        // Default Today Date
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('late-date').value = todayStr;
+
+        // Navigation Switcher
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+
+            if (tabId === 'admin-tab' && isAdminAuthenticated) {
+                renderAdminTable();
+            }
+        };
+
+        window.toggleCustomReasonInput = function() {
+            const reasonSelect = document.getElementById('late-reason');
+            const customContainer = document.getElementById('custom-reason-container');
+            const customInput = document.getElementById('custom-reason');
+
+            if (reasonSelect.value === 'LAIN-LAIN') {
+                customContainer.classList.remove('hidden');
+                customInput.setAttribute('required', 'true');
+            } else {
+                customContainer.classList.add('hidden');
+                customInput.removeAttribute('required');
+                customInput.value = '';
+            }
+        };
+
+        // Submit Form
+        document.getElementById('late-record-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submit-btn');
+            const origBtnHTML = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menghantar Data...</span>`;
+
+            const nameInput = document.getElementById('student-name').value.trim().toUpperCase();
+            const dateInput = document.getElementById('late-date').value;
+            const classInput = document.getElementById('student-class').value;
+            const reasonSelect = document.getElementById('late-reason').value;
+            let finalReason = reasonSelect;
+
+            if (reasonSelect === 'LAIN-LAIN') {
+                const customReasonVal = document.getElementById('custom-reason').value.trim();
+                finalReason = customReasonVal ? `LAIN-LAIN: ${customReasonVal.toUpperCase()}` : 'LAIN-LAIN';
+            }
+
+            const recordData = {
+                id: 'rec_' + Date.now(),
+                nama: nameInput,
+                tarikh: dateInput,
+                kelas: classInput,
+                alasan: finalReason,
+                created_at: new Date().toISOString()
+            };
+
+            let isSaved = false;
+
+            if (isFirebaseActive && recordsCollectionRef) {
+                try {
+                    await addDoc(recordsCollectionRef, {
+                        ...recordData,
+                        created_at: serverTimestamp()
+                    });
+                    isSaved = true;
+                } catch (error) {
+                    console.warn("Gagal simpan ke Firebase, bertukar ke LocalStorage", error);
+                }
+            }
+
+            if (!isSaved) {
+                const currentLocal = getLocalRecords();
+                currentLocal.push(recordData);
+                saveLocalRecords(currentLocal);
+                loadLocalRecords();
+            }
+
+            showToast(`Rekod kelewatan ${nameInput} berjaya disimpan!`, "success");
+
+            // Reset Form
+            document.getElementById('late-record-form').reset();
+            document.getElementById('late-date').value = todayStr;
+            toggleCustomReasonInput();
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnHTML;
+
+            switchTab('leaderboard-tab');
+        });
+
+        // Render Leaderboard Awam (Top 10 Kelewatan)
+        function renderLeaderboard() {
+            const emptyEl = document.getElementById('leaderboard-empty');
+            const containerEl = document.getElementById('leaderboard-list-container');
+
+            if (!allRecords || allRecords.length === 0) {
+                emptyEl.classList.remove('hidden');
+                containerEl.classList.add('hidden');
+                document.getElementById('stat-total-records').innerText = '0';
+                document.getElementById('stat-total-students').innerText = '0';
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            containerEl.classList.remove('hidden');
+
+            const studentMap = {};
+            allRecords.forEach(rec => {
+                const key = `${rec.nama}___${rec.kelas}`;
+                if (!studentMap[key]) {
+                    studentMap[key] = {
+                        nama: rec.nama,
+                        kelas: rec.kelas,
+                        count: 0,
+                        latestDate: rec.tarikh,
+                        reasons: []
+                    };
+                }
+                studentMap[key].count += 1;
+                studentMap[key].reasons.push(rec.alasan);
+                if (rec.tarikh > studentMap[key].latestDate) {
+                    studentMap[key].latestDate = rec.tarikh;
+                }
+            });
+
+            const aggregatedList = Object.values(studentMap).sort((a, b) => b.count - a.count);
+            const top10 = aggregatedList.slice(0, 10);
+
+            document.getElementById('stat-total-records').innerText = allRecords.length;
+            document.getElementById('stat-total-students').innerText = Object.keys(studentMap).length;
+
+            let html = '';
+            top10.forEach((item, idx) => {
+                let rankBadge = '';
+                let bgHighlight = '';
+
+                if (idx === 0) {
+                    rankBadge = `<span class="w-9 h-9 bg-amber-500 text-white font-black rounded-xl flex items-center justify-center text-lg shadow-md shadow-amber-500/30">1</span>`;
+                    bgHighlight = 'bg-amber-50/60 border-l-4 border-amber-500';
+                } else if (idx === 1) {
+                    rankBadge = `<span class="w-9 h-9 bg-slate-400 text-white font-black rounded-xl flex items-center justify-center text-lg shadow-md">2</span>`;
+                    bgHighlight = 'bg-slate-50/60 border-l-4 border-slate-400';
+                } else if (idx === 2) {
+                    rankBadge = `<span class="w-9 h-9 bg-amber-700 text-white font-black rounded-xl flex items-center justify-center text-lg shadow-md">3</span>`;
+                    bgHighlight = 'bg-orange-50/50 border-l-4 border-amber-700';
+                } else {
+                    rankBadge = `<span class="w-9 h-9 bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center text-sm">${idx + 1}</span>`;
+                    bgHighlight = '';
+                }
+
+                const latestReason = item.reasons[item.reasons.length - 1] || 'KELEWATAN';
+
+                html += `
+                    <div class="p-4 sm:p-5 flex items-center justify-between gap-4 transition-all hover:bg-slate-50 ${bgHighlight}">
+                        <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                            ${rankBadge}
+                            <div class="truncate">
+                                <h4 class="font-bold text-slate-800 text-sm sm:text-base truncate uppercase">${item.nama}</h4>
+                                <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                                    <span class="text-xs bg-blue-100 text-blue-700 font-bold px-2.5 py-0.5 rounded-md">${item.kelas}</span>
+                                    <span class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>Terakhir: ${item.latestDate}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-right flex-shrink-0">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-rose-100 text-rose-700 border border-rose-200">
+                                ${item.count} Kali Lewat
+                            </span>
+                            <p class="text-[11px] text-slate-400 mt-1 max-w-[140px] truncate hidden sm:block">${latestReason}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            containerEl.innerHTML = html;
+        }
+
+        // Admin Auth & Functions
+        document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('admin-password').value;
+            if (pass === 'admin123') {
+                isAdminAuthenticated = true;
+                document.getElementById('admin-auth-card').classList.add('hidden');
+                document.getElementById('admin-content').classList.remove('hidden');
+                document.getElementById('admin-error-msg').classList.add('hidden');
+                renderAdminTable();
+                showToast("Log masuk admin berjaya!", "success");
+            } else {
+                document.getElementById('admin-error-msg').classList.remove('hidden');
+            }
+        });
+
+        window.logoutAdmin = function() {
+            isAdminAuthenticated = false;
+            document.getElementById('admin-auth-card').classList.remove('hidden');
+            document.getElementById('admin-content').classList.add('hidden');
+            document.getElementById('admin-password').value = '';
+            showToast("Telah log keluar daripada Panel Admin", "success");
+        };
+
+        window.renderAdminTable = function() {
+            if (!isAdminAuthenticated) return;
+
+            const tbody = document.getElementById('admin-table-body');
+            const emptyEl = document.getElementById('admin-table-empty');
+            const searchQuery = document.getElementById('admin-search').value.toLowerCase();
+            const filterClass = document.getElementById('admin-filter-class').value;
+
+            let filtered = [...allRecords].sort((a, b) => new Date(b.tarikh) - new Date(a.tarikh));
+
+            if (searchQuery) {
+                filtered = filtered.filter(r => 
+                    r.nama.toLowerCase().includes(searchQuery) || 
+                    (r.alasan && r.alasan.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            if (filterClass) {
+                filtered = filtered.filter(r => r.kelas === filterClass);
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+
+            let html = '';
+            filtered.forEach((rec, idx) => {
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3.5 px-6 font-bold text-slate-400">${idx + 1}</td>
+                        <td class="py-3.5 px-6 font-bold text-slate-800 uppercase">${rec.nama}</td>
+                        <td class="py-3.5 px-6">
+                            <span class="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg text-xs border border-blue-200">${rec.kelas}</span>
+                        </td>
+                        <td class="py-3.5 px-6 text-slate-600 font-semibold">${rec.tarikh}</td>
+                        <td class="py-3.5 px-6 text-slate-600 max-w-xs truncate">${rec.alasan}</td>
+                        <td class="py-3.5 px-6 text-center">
+                            <button onclick="openDeleteModal('${rec.id}')" class="text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 p-2 rounded-xl transition-all" title="Padam Rekod">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        };
+
+        window.filterAdminTable = function() {
+            renderAdminTable();
+        };
+
+        // Modal Logic
+        window.openDeleteModal = function(id) {
+            recordToDeleteId = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        };
+
+        window.closeDeleteModal = function() {
+            recordToDeleteId = null;
+            document.getElementById('delete-modal').classList.add('hidden');
+        };
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+            if (!recordToDeleteId) return;
+
+            let deleted = false;
+            if (isFirebaseActive && recordsCollectionRef) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rekod_lewat', recordToDeleteId);
+                    await deleteDoc(docRef);
+                    deleted = true;
+                } catch (err) {}
+            }
+
+            if (!deleted) {
+                const currentLocal = getLocalRecords().filter(r => r.id !== recordToDeleteId);
+                saveLocalRecords(currentLocal);
+                loadLocalRecords();
+            }
+
+            showToast("Rekod berjaya dipadam!", "success");
+            closeDeleteModal();
+        });
+
+        // Export Data to CSV
+        window.exportToCSV = function() {
+            if (allRecords.length === 0) {
+                showToast("Tiada data untuk dieksport!", "error");
+                return;
+            }
+
+            const headers = ["Bil", "Nama Murid", "Kelas", "Tarikh", "Alasan Lewat"];
+            const rows = allRecords.map((r, i) => [
+                i + 1,
+                `"${(r.nama || '').replace(/"/g, '""')}"`,
+                `"${r.kelas || ''}"`,
+                `"${r.tarikh || ''}"`,
+                `"${(r.alasan || '').replace(/"/g, '""')}"`
+            ]);
+
+            let csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Rekod_Murid_Lewat_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("Fail CSV berjaya dimuat turun!", "success");
+        };
+
+        // Toast Helper
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = message;
+
+            if (type === "success") {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i>`;
+            } else {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i>`;
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Initialize App
+        initApp();
+    </script>
+</body>
+</html>
